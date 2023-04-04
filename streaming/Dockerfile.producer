@@ -1,0 +1,13 @@
+FROM python:3.9-slim-buster
+
+ENV KAFKA_BROKER='kafka:9092'
+
+COPY test_producer.py /
+
+COPY requirements.txt /
+
+RUN pip install -r requirements.txt
+
+#CMD ["python", "/test_producer.py"]
+
+CMD ["sleep", "infinity"]
