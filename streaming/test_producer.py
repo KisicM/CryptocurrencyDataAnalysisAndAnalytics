@@ -33,7 +33,7 @@ async def handler(websocket):
     connection_message_received = False
     # initialize batching variables
     batch = []
-    batch_size = 5
+    batch_size = 1
     batch_timeout = 30  # in seconds
     last_batch_sent_time = time.time()
     while True:
@@ -45,7 +45,7 @@ async def handler(websocket):
             parsed_block = parse_block(message)
             batch.append(parsed_block)
             if len(batch) >= batch_size or time.time() - last_batch_sent_time >= batch_timeout:
-                producer.send('block_creation', batch)
+                producer.send('block_creation', parsed_block)
                 batch = []
                 last_batch_sent_time = time.time()
         except Exception as ex:
