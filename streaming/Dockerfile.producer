@@ -10,4 +10,4 @@ RUN pip install -r requirements.txt
 
 #CMD ["python", "/test_producer.py"]
 
-CMD ["sleep", "infinity"]
+CMD sleep infinity

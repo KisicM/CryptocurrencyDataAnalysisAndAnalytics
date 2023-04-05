@@ -4,10 +4,10 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, sum
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 
-kafka_broker = "172.18.0.3:9092"
+kafka_broker = "kafka:9092"
 topic_name = "block_creation"
 
-# spark = (SparkSession.builder
+# awaitTermination()spark = (SparkSession.builder
 #          .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.2")
 #          .appName("KafkaSparkStreaming")
 #          .getOrCreate())
@@ -32,7 +32,7 @@ topic_name = "block_creation"
 #     .format("console") \
 #     .start()
 
-# query.awaitTermination()
+# query.
 
 # create Kafka consumer
 consumer = KafkaConsumer(

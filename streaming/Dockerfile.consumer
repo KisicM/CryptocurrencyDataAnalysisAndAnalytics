@@ -8,4 +8,4 @@ COPY test_consumer.py /
 
 #CMD ["python", "/test_consumer.py"]
 
-CMD ["sleep", "infinity"]
+CMD sleep infinity
