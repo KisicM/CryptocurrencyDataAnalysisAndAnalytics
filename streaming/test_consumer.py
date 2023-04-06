@@ -1,8 +1,9 @@
 from kafka import KafkaConsumer
 import json
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, sum, window, count, udf
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+from pyspark.sql.window import Window
+from pyspark.sql.functions import from_json, col, sum, window, count, from_unixtime, expr, avg, row_number, desc
+from pyspark.sql.types import StructType, StructField, StringType
 
 kafka_broker = "kafka:9092"
 topic_name = "block_creation"
@@ -33,43 +34,47 @@ block_schema = StructType([
     StructField("transactionsRoot", StringType())
 ])
 
-# Define a function to convert hex to string
-def hex_to_str(hex_string):
-    if hex_string:
-        return str(int(hex_string, 16))
-    else:
-        return ""
-
-# Register the function as a UDF
-hex_to_str_udf = udf(hex_to_str, StringType())
-
 df = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", kafka_broker) \
     .option("subscribe", topic_name) \
     .load() \
 
-# filtered_df = df.filter("key IS NOT NULL and value IS NOT NULL")
 df = df.select(from_json(col("value").cast("string"), block_schema).alias("data")) \
 .select("data.*")
 
-# Apply the UDF to all columns in the block DataFrame
-df = df.select([hex_to_str_udf(col).alias(col) for col in df.columns])
+df = df.withColumn("timestamp", expr("int(conv(substring(timestamp, 3), 16, 10))")) \
+    .withColumn("blockNumber", expr("int(conv(substring(number, 3), 16, 10))")) \
+    .withColumn("date", from_unixtime(col("timestamp")).cast("timestamp")) \
+    .withColumn("sizeInKb", expr("int(conv(substring(size, 3), 16, 10))") / 1024) \
+    .withColumn("gasUsedDecimal", expr("int(conv(substring(gasUsed, 3), 16, 10))")) \
+    .withColumn("gasLimitDecimal", expr("int(conv(substring(gasLimit, 3), 16, 10))")) \
+    .withColumn("gasPercentage", col("gasUsedDecimal") / (col("gasLimitDecimal"))) \
 
-query = df.writeStream \
-    .outputMode("update") \
+# query = df.writeStream \
+#     .outputMode("append") \
+#     .format("console") \
+#     .start()
+
+# query.awaitTermination()
+
+# Process the blocks in batches
+windowed = df \
+    .withWatermark("date", "5 minutes") \
+    .groupBy(window("date", "1 minute")) \
+    .agg(
+        count("*").alias("num_blocks"),
+        sum("gasUsedDecimal").alias("total_gas_used"),
+        avg("gasPercentage").alias("avg_gas_used_percentage"),
+        avg("sizeInKb").alias("avg_block_size_kb")
+    )
+
+# Output the windowed results to the console
+query = windowed.writeStream \
+    .outputMode("complete") \
     .format("console") \
+    .option("truncate", "false") \
+    .trigger(processingTime="10 seconds") \
     .start()
 
 query.awaitTermination()
-
-# # create Kafka consumer
-# consumer = KafkaConsumer(
-#     topic_name,  # replace with the topic you want to consume from
-#     bootstrap_servers=[kafka_broker],
-#     value_deserializer=lambda m: json.loads(m.decode('ascii'))
-# )
-
-# # loop over incoming messages and print them to console
-# for message in consumer:
-#     print(message.value)
