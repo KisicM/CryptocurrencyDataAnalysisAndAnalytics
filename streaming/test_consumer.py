@@ -14,7 +14,7 @@ database = "eth_block"
 username = "admin"
 password = "password"
 
-client = InfluxDBClient(url=f"http://{host}:{port}", token=f"iLVQtfCYqV-vZRyz2aPbnoqSDWSP0sp-ZuRQNCuPe2kGkT6KWO6M0M5KAtV2E--a8HStTMEEos3MVibxSNZHVA==", org="-")
+client = InfluxDBClient(url=f"http://{host}:{port}", token=f"lPhnJcc9XiYIaCGybs9opwY7i567FKRWS46FjE2nN7kkiLBMvlkD_s0yaz9slR0z_yleS_W8Z1RcQnlxHDj_pA==", org="bigdata")
 write_api = client.write_api(write_options=SYNCHRONOUS)
 
 spark = (SparkSession.builder

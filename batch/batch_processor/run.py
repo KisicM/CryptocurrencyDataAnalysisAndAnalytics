@@ -12,7 +12,7 @@ def main():
         .getOrCreate()
     )
     #HDFS_NAMENODE = os.environ["CORE_CONF_fs_defaultFS"]
-    source_path = f'hdfs://namenode:9000/user/admin/btcusd.csv'
+    source_path = f'hdfs://namenode:9000/user/data/btcusd.csv'
     local_path = "../../btcusd.csv"
     print('reading source')
     df = spark.read.csv(
